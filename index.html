@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F2B28">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Registro USDT · Bs</title>
+<style>
+  :root{
+    --ink-bg: #0F2B28;
+    --ink-bg-2: #143733;
+    --paper: #FBF7EE;
+    --paper-line: #DED4BC;
+    --text: #211E17;
+    --text-soft: #6B6252;
+    --buy: #1BA97A;
+    --buy-deep: #0E7A57;
+    --sell: #C2542C;
+    --sell-deep: #96401F;
+    --gold: #D9B45C;
+    --danger: #B4432C;
+    --radius: 14px;
+    --serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+    --sans: "Work Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--ink-bg);
+    background-image:
+      radial-gradient(circle at 15% -10%, rgba(217,180,92,0.10), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(27,169,122,0.14), transparent 45%);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display:flex;
+    justify-content:center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding-bottom: 78px;
+    position:relative;
+  }
+  header{
+    padding: 22px 20px 14px;
+    color: var(--paper);
+  }
+  header .eyebrow{
+    font-size:13px;
+    color: rgba(251,247,238,0.55);
+    margin:0 0 2px;
+    letter-spacing: 0.01em;
+  }
+  header h1{
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 28px;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .sync-status{
+    display:flex; align-items:center; gap:6px;
+    font-size:11.5px;
+    color: rgba(251,247,238,0.6);
+    margin-bottom:12px;
+  }
+  .sync-status .dot{ width:7px; height:7px; border-radius:50%; background:#8a8a8a; flex-shrink:0; }
+  .sync-status.ok .dot{ background:#6BE3B7; }
+  .sync-status.error .dot{ background:#F0997A; }
+  .sync-status.off .dot{ background: rgba(251,247,238,0.3); }
+  .ticker{ display:flex; gap:10px; }
+  .ticker .stat{
+    flex:1;
+    background: rgba(251,247,238,0.07);
+    border: 1px solid rgba(251,247,238,0.14);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+  }
+  .ticker .stat .n{ font-family: var(--serif); font-size: 19px; font-variant-numeric: tabular-nums; line-height:1.15; }
+  .ticker .stat .l{ font-size: 11.5px; color: rgba(251,247,238,0.6); margin-top:2px; }
+  .ticker .stat.buy .n{ color: #6BE3B7; }
+  .ticker .stat.sell .n{ color: #F0997A; }
+
+  main{
+    flex:1;
+    background: var(--paper);
+    border-radius: 22px 22px 0 0;
+    padding: 22px 18px 24px;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.25);
+  }
+  .view{ display:none; }
+  .view.active{ display:block; animation: rise .22s ease; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  h2.section-title{ font-family: var(--serif); font-size: 20px; margin: 0 0 4px; color: var(--text); }
+  p.section-sub{ margin: 0 0 18px; font-size: 13px; color: var(--text-soft); }
+
+  .type-toggle{
+    display:flex; border-radius: 999px; background: #EFE9D8;
+    padding:4px; margin-bottom:18px; border: 1px solid var(--paper-line);
+  }
+  .type-toggle button{
+    flex:1; border:none; background:transparent; padding: 11px 0;
+    font-family: var(--sans); font-weight:600; font-size:14.5px;
+    border-radius: 999px; color: var(--text-soft); cursor:pointer;
+    transition: background .15s, color .15s;
+  }
+  .type-toggle button.on.compra{ background: var(--buy); color:#fff; }
+  .type-toggle button.on.venta{ background: var(--sell); color:#fff; }
+
+  .edit-banner{
+    display:none;
+    align-items:center; justify-content:space-between;
+    background:#FCF1D8; border:1px solid var(--gold);
+    border-radius:10px; padding:10px 14px; margin-bottom:16px;
+    font-size:13px;
+  }
+  .edit-banner.show{ display:flex; }
+  .edit-banner button{ border:none; background:none; color:var(--sell-deep); font-weight:700; font-size:12.5px; cursor:pointer; }
+
+  .field{ margin-bottom:15px; }
+  .field label{ display:block; font-size: 12.5px; font-weight: 600; color: var(--text-soft); margin-bottom:6px; }
+  .field input, .field select{
+    width:100%; border: 1.5px solid var(--paper-line); background: #fff;
+    border-radius: 10px; padding: 12px 12px; font-size: 16px;
+    font-family: var(--sans); color: var(--text); font-variant-numeric: tabular-nums;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color: var(--buy-deep); }
+  .row2{ display:flex; gap:10px; }
+  .row2 .field{ flex:1; }
+  .hint{ font-size:11.5px; color: var(--text-soft); margin-top:5px; }
+
+  details.advanced{
+    border: 1.5px solid var(--paper-line);
+    border-radius: var(--radius);
+    padding: 4px 14px;
+    margin-bottom: 18px;
+    background:#fff;
+  }
+  details.advanced summary{
+    padding: 10px 0; font-weight:600; font-size:13.5px; color: var(--text-soft); cursor:pointer;
+    list-style: none;
+  }
+  details.advanced summary::-webkit-details-marker{ display:none; }
+  details.advanced summary::before{ content:'▸ '; }
+  details.advanced[open] summary::before{ content:'▾ '; }
+  details.advanced .field:last-child{ margin-bottom:14px; }
+
+  .photo-box{
+    border: 1.5px dashed var(--paper-line); border-radius: var(--radius);
+    padding: 14px; text-align:center; margin-bottom: 18px; background: #fff;
+  }
+  .photo-box img{ max-width:100%; max-height:150px; border-radius:8px; margin-top:10px; }
+  .photo-box .btn-photo{
+    display:inline-flex; align-items:center; gap:8px; background:#EFE9D8;
+    border:none; border-radius:999px; padding:9px 16px; font-size:13.5px;
+    font-weight:600; color:var(--text); cursor:pointer;
+  }
+  .ocr-status{ font-size:12.5px; color: var(--buy-deep); margin-top:8px; }
+  .ocr-status.working{ color: var(--gold); }
+
+  .btn-primary{
+    width:100%; border:none; border-radius: 999px; padding: 15px 0;
+    font-family: var(--sans); font-weight:700; font-size:15.5px;
+    color:#fff; cursor:pointer; background: var(--ink-bg-2);
+  }
+  .btn-primary.compra{ background: var(--buy-deep); }
+  .btn-primary.venta{ background: var(--sell-deep); }
+
+  .filters{ display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; padding-bottom:2px; }
+  .filters button{
+    border:1.5px solid var(--paper-line); background:#fff; padding:7px 14px;
+    border-radius:999px; font-size:12.5px; font-weight:600; color: var(--text-soft);
+    white-space:nowrap; cursor:pointer;
+  }
+  .filters button.on{ background: var(--ink-bg-2); border-color: var(--ink-bg-2); color:#fff; }
+
+  .ledger-row{ display:flex; align-items:flex-start; gap:12px; padding: 13px 0; border-bottom: 1px solid var(--paper-line); cursor:pointer; }
+  .ledger-row:last-child{ border-bottom:none; }
+  .dot{ width:9px; height:9px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+  .dot.compra{ background: var(--buy); }
+  .dot.venta{ background: var(--sell); }
+  .ledger-main{ flex:1; min-width:0; }
+  .ledger-main .top{ display:flex; justify-content:space-between; gap:8px; font-family: var(--serif); font-size: 16px; }
+  .ledger-main .top .amt{ font-variant-numeric: tabular-nums; }
+  .ledger-main .meta{ font-size:12px; color: var(--text-soft); margin-top:3px; display:flex; flex-wrap:wrap; gap:6px 10px; }
+  .ledger-main .meta .comision{ color: var(--sell-deep); }
+  .ledger-row .del{ border:none; background:none; color:#B7ADA0; font-size:18px; cursor:pointer; padding:2px 4px; }
+  .empty{ text-align:center; padding: 40px 10px; color: var(--text-soft); font-size:14px; }
+
+  .sum-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+  .sum-card{ background:#fff; border:1px solid var(--paper-line); border-radius: var(--radius); padding:14px; }
+  .sum-card .v{ font-family: var(--serif); font-size:20px; font-variant-numeric: tabular-nums; }
+  .sum-card .v.pos{ color: var(--buy-deep); }
+  .sum-card .v.neg{ color: var(--sell-deep); }
+  .sum-card .l{ font-size:11.5px; color:var(--text-soft); margin-top:3px; }
+  .bank-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--paper-line); font-size:13.5px; }
+  .bank-row:last-child{ border-bottom:none; }
+
+  .switch-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--paper-line); }
+  .switch-row:last-child{ border-bottom:none; }
+  .btn-secondary{
+    width:100%; border:1.5px solid var(--ink-bg-2); background:transparent;
+    border-radius:999px; padding:12px 0; font-weight:700; font-size:14px;
+    color: var(--ink-bg-2); cursor:pointer; margin-bottom:10px;
+  }
+  .btn-danger{ border-color: var(--danger); color: var(--danger); }
+
+  nav.tabbar{
+    position:fixed; bottom:0; left:0; right:0; display:flex; justify-content:center;
+    background: var(--paper); border-top:1px solid var(--paper-line);
+    padding: 8px max(8px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));
+    z-index:10;
+  }
+  nav.tabbar .inner{ width:100%; max-width:480px; display:flex; }
+  nav.tabbar button{
+    flex:1; background:none; border:none; display:flex; flex-direction:column;
+    align-items:center; gap:3px; padding:6px 0; color: var(--text-soft);
+    font-size:11px; font-weight:600; cursor:pointer;
+  }
+  nav.tabbar button svg{ width:21px; height:21px; }
+  nav.tabbar button.active{ color: var(--ink-bg-2); }
+  nav.tabbar button.active svg{ stroke: var(--ink-bg-2); }
+
+  .toast{
+    position:fixed; left:50%; bottom:88px; transform:translateX(-50%);
+    background: var(--ink-bg); color:#fff; padding:10px 18px; border-radius:999px;
+    font-size:13px; z-index:20; opacity:0; pointer-events:none; transition: opacity .2s;
+    max-width: 85%; text-align:center;
+  }
+  .toast.show{ opacity:1; }
+  input[type="file"]{ display:none; }
+
+    /* --- ESTILOS RESPONSIVE PARA DISPOSITIVOS MÓVILES --- */
+
+  /* Asegurar que las imágenes y contenedores no superen el ancho de la pantalla */
+  img, video, canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Contenedor principal adaptable */
+  body {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 10px;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ajustes automáticos para pantallas pequeñas (móviles menores a 768px) */
+  @media screen and (max-width: 768px) {
+    /* Hacer que los formularios y tarjetas ocupen el ancho completo */
+    .container, .card, form {
+      width: 100% !important;
+      padding: 10px !important;
+      box-sizing: border-box;
+    }
+
+    /* Reducir ligeramente los títulos y fuentes muy grandes en móviles */
+    h1 { font-size: 1.5rem !important; }
+    h2 { font-size: 1.2rem !important; }
+
+    /* Apilar botones de acción si están en línea */
+    .button-group, .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    button {
+      width: 100% !important;
+    }
+
+    /* Permitir scroll horizontal suave en tablas grandes si las hubiera */
+    table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <p class="eyebrow" id="dateNow">—</p>
+    <h1>Registro USDT · Bs</h1>
+    <div class="sync-status off" id="syncStatus"><span class="dot"></span><span id="syncStatusText">Sincronización no configurada</span></div>
+    <div class="ticker">
+      <div class="stat buy"><div class="n" id="tkCompra">0</div><div class="l">Compras hoy</div></div>
+      <div class="stat sell"><div class="n" id="tkVenta">0</div><div class="l">Ventas hoy</div></div>
+      <div class="stat"><div class="n" id="tkTasa">—</div><div class="l">Última tasa</div></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- REGISTRAR -->
+    <section class="view active" id="view-registrar">
+      <h2 class="section-title">Nueva transacción</h2>
+      <p class="section-sub">Registra manualmente o adjunta una captura de pantalla.</p>
+
+      <div class="edit-banner" id="editBanner">
+        <span>Editando transacción existente</span>
+        <button type="button" id="btnCancelEdit">Cancelar</button>
+      </div>
+
+      <div class="type-toggle">
+        <button type="button" id="btnTipoCompra" class="on compra">Compra</button>
+        <button type="button" id="btnTipoVenta">Venta</button>
+      </div>
+
+      <div class="photo-box">
+        <div id="photoPreviewWrap" style="display:none;"><img id="photoPreview"></div>
+        <div>
+          <button type="button" class="btn-photo" id="btnAdjuntar">📷 Adjuntar captura</button>
+          <input type="file" id="fileInput" accept="image/*">
+        </div>
+        <div class="ocr-status" id="ocrStatus"></div>
+      </div>
+
+      <div class="field">
+        <label for="fUsdt">Monto en USDT (cantidad total)</label>
+        <input type="number" inputmode="decimal" id="fUsdt" placeholder="0.00" step="0.01">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="fTasa">Tasa (Bs por USDT)</label>
+          <input type="number" inputmode="decimal" id="fTasa" placeholder="0.00" step="0.01">
+        </div>
+        <div class="field">
+          <label for="fBs">Monto en Bs</label>
+          <input type="number" inputmode="decimal" id="fBs" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+      <p class="hint" id="calcHint">Completa dos campos y el tercero se calcula solo.</p>
+
+      <div class="field">
+        <label for="fFecha">Fecha y hora</label>
+        <input type="datetime-local" id="fFecha">
+        <p class="hint" id="tzHint"></p>
+      </div>
+      <div class="field">
+        <label for="fUsuario">Nombre / alias de la contraparte</label>
+        <input type="text" id="fUsuario" placeholder="Ej: Carlos Pérez">
+      </div>
+      <div class="field">
+        <label for="fBanco">Banco / método de pago</label>
+        <input type="text" id="fBanco" list="bancoList" placeholder="Ej: Banesco">
+        <datalist id="bancoList">
+          <option value="Banesco"><option value="Mercantil"><option value="Venezuela">
+          <option value="BOD"><option value="Provincial"><option value="Bancaribe">
+          <option value="Binance Pay"><option value="Pago Móvil"><option value="Zelle">
+        </datalist>
+      </div>
+
+      <details class="advanced" id="advancedDetails">
+        <summary>Datos avanzados (comisión, orden, plataforma)</summary>
+        <div class="row2">
+          <div class="field">
+            <label for="fComision">Comisión (USDT)</label>
+            <input type="number" inputmode="decimal" id="fComision" placeholder="0.00" step="0.01">
+          </div>
+          <div class="field">
+            <label for="fLiberada">Cantidad liberada (USDT)</label>
+            <input type="number" inputmode="decimal" id="fLiberada" placeholder="0.00" step="0.01">
+          </div>
+        </div>
+        <div class="field">
+          <label for="fOrden">N.° de orden</label>
+          <input type="text" id="fOrden" placeholder="Ej: 22931851269003227136">
+        </div>
+        <div class="field">
+          <label for="fPlataforma">Plataforma</label>
+          <input type="text" id="fPlataforma" list="plataformaList" placeholder="Ej: Binance">
+          <datalist id="plataformaList">
+            <option value="Binance"><option value="P2P directo"><option value="Otro">
+          </datalist>
+        </div>
+      </details>
+
+      <button type="button" class="btn-primary compra" id="btnGuardar">Guardar compra</button>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section class="view" id="view-historial">
+      <h2 class="section-title">Historial</h2>
+      <p class="section-sub">Toca una transacción para editarla.</p>
+      <div class="filters">
+        <button class="on" data-f="todas">Todas</button>
+        <button data-f="compra">Compras</button>
+        <button data-f="venta">Ventas</button>
+      </div>
+      <div id="ledgerList"></div>
+    </section>
+
+    <!-- RESUMEN -->
+    <section class="view" id="view-resumen">
+      <h2 class="section-title">Resumen</h2>
+      <p class="section-sub">Totales generales de tu actividad (USDT neto tras comisiones).</p>
+      <div class="sum-grid">
+        <div class="sum-card"><div class="v" id="sUsdtCompra">0</div><div class="l">USDT comprados (neto)</div></div>
+        <div class="sum-card"><div class="v" id="sUsdtVenta">0</div><div class="l">USDT vendidos (neto)</div></div>
+        <div class="sum-card"><div class="v" id="sBsCompra">0</div><div class="l">Bs invertidos</div></div>
+        <div class="sum-card"><div class="v" id="sBsVenta">0</div><div class="l">Bs recibidos</div></div>
+        <div class="sum-card"><div class="v" id="sTasaProm">0</div><div class="l">Tasa promedio</div></div>
+        <div class="sum-card"><div class="v" id="sComisionTotal">0</div><div class="l">Comisiones pagadas (USDT)</div></div>
+      </div>
+      <h2 class="section-title" style="font-size:16px;">Ganancia por periodo</h2>
+      <div class="filters" id="gananciaFilters">
+        <button class="on" data-p="dia">Hoy</button>
+        <button data-p="semana">Semana</button>
+        <button data-p="mes">Mes</button>
+        <button data-p="todo">Todo</button>
+      </div>
+      <div class="sum-grid" style="margin-bottom:20px;">
+        <div class="sum-card"><div class="v" id="gananciaBs">0</div><div class="l" id="gananciaBsLabel">Ganancia (Bs) — hoy</div></div>
+        <div class="sum-card"><div class="v" id="gananciaPctBs">0%</div><div class="l">Ganancia % (sobre Bs invertidos)</div></div>
+        <div class="sum-card"><div class="v" id="gananciaUsdt">0</div><div class="l" id="gananciaUsdtLabel">Ganancia (USDT) — hoy</div></div>
+        <div class="sum-card"><div class="v" id="gananciaPctUsdt">0%</div><div class="l">Ganancia % (sobre USDT comprados)</div></div>
+      </div>
+
+      <h2 class="section-title" style="font-size:16px;">Por banco</h2>
+      <div id="bankList" style="margin-bottom:10px;"></div>
+    </section>
+
+    <!-- AJUSTES -->
+    <section class="view" id="view-ajustes">
+      <h2 class="section-title">Ajustes</h2>
+      <p class="section-sub">Sincronización en tiempo real y respaldo de tus datos.</p>
+
+      <div class="field">
+        <label for="fSheetUrl">URL de Google Apps Script (Web App)</label>
+        <input type="text" id="fSheetUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <div class="field">
+        <label for="fSyncInterval">Intervalo de sincronización (segundos)</label>
+        <input type="number" id="fSyncInterval" min="1" step="1" value="1">
+        <p class="hint">Cada cuántos segundos revisa la app si hay cambios nuevos en el Google Sheet desde otro dispositivo. 1 segundo = casi instantáneo, pero consume más batería y datos; si notas lentitud prueba con 3-5.</p>
+      </div>
+      <button type="button" class="btn-secondary" id="btnSyncAll">Sincronizar ahora</button>
+      <button type="button" class="btn-secondary" id="btnExportCsv">Exportar CSV</button>
+      <button type="button" class="btn-secondary" id="btnExportJson">Exportar respaldo (JSON)</button>
+      <button type="button" class="btn-secondary" id="btnImportJson">Importar respaldo (JSON)</button>
+      <input type="file" id="importInput" accept="application/json">
+      <button type="button" class="btn-secondary btn-danger" id="btnBorrarTodo">Borrar todos los registros</button>
+      <p class="hint">Para conectar Google Sheets: revisa el archivo "apps-script.gs", pégalo en script.google.com, impleméntalo como aplicación web (acceso: cualquier usuario) y copia el enlace aquí. Todos los dispositivos que usen la misma URL comparten los mismos registros.</p>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <div class="inner">
+      <button class="tab active" data-v="registrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        Registrar
+      </button>
+      <button class="tab" data-v="historial">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Historial
+      </button>
+      <button class="tab" data-v="resumen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9m6 10V4m6 15v-7"/></svg>
+        Resumen
+      </button>
+      <button class="tab" data-v="ajustes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.56V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.56 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.56-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.56-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.56V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.56 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.56 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.56 1z"/></svg>
+        Ajustes
+      </button>
+    </div>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  const STORE_KEY = 'usdtbs_records_v2';
+  const SETTINGS_KEY = 'usdtbs_settings_v2';
+
+  let records = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+  let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+  let currentTipo = 'compra';
+  let historyFilter = 'todas';
+  let lastEditedField = null;
+  let attachedPhoto = null;
+  let editingId = null;
+  let isSyncing = false;
+  let syncTimer = null;
+
+  function genId(){
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+  }
+  function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(records)); }
+  function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+  function fmt(n, d=2){ return Number(n||0).toLocaleString('es-VE', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+  function visibleRecords(){ return records.filter(r=>!r.deleted); }
+  function usdtEfectivo(r){
+    const lib = Number(r.cantidadLiberada)||0;
+    return lib > 0 ? lib : Number(r.usdt)||0;
+  }
+  function renderAll(){ renderTicker(); renderLedger(); renderSummary(); }
+
+  // ---------- Parseo de números en formato latino o estadounidense ----------
+  function parseLatinNumber(str){
+    if(str === null || str === undefined) return NaN;
+    str = String(str).trim().replace(/[^0-9.,-]/g,'');
+    if(!str) return NaN;
+    const lastComma = str.lastIndexOf(',');
+    const lastDot = str.lastIndexOf('.');
+    if(lastComma > lastDot){
+      str = str.replace(/\./g,'').replace(',', '.');
+    } else {
+      str = str.replace(/,/g,'');
+    }
+    return parseFloat(str);
+  }
+
+  // ---------- Nav ----------
+  document.querySelectorAll('.tabbar .tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tabbar .tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('view-'+btn.dataset.v).classList.add('active');
+      if(btn.dataset.v === 'historial') renderLedger();
+      if(btn.dataset.v === 'resumen') renderSummary();
+    });
+  });
+
+  // ---------- Header date ----------
+  function renderHeaderDate(){
+    const now = new Date();
+    document.getElementById('dateNow').textContent = now.toLocaleDateString('es-VE', {weekday:'long', day:'numeric', month:'long'});
+  }
+  function renderTicker(){
+    const today = new Date().toDateString();
+    const vis = visibleRecords();
+    const todays = vis.filter(r => new Date(r.fecha).toDateString() === today);
+    const c = todays.filter(r=>r.tipo==='compra').reduce((a,r)=>a+usdtEfectivo(r),0);
+    const v = todays.filter(r=>r.tipo==='venta').reduce((a,r)=>a+usdtEfectivo(r),0);
+    document.getElementById('tkCompra').textContent = fmt(c,0)+' U';
+    document.getElementById('tkVenta').textContent = fmt(v,0)+' U';
+    const last = [...vis].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha)).pop();
+    document.getElementById('tkTasa').textContent = last ? fmt(last.tasa) : '—';
+  }
+
+  // ---------- Type toggle ----------
+  const btnCompra = document.getElementById('btnTipoCompra');
+  const btnVenta = document.getElementById('btnTipoVenta');
+  const btnGuardar = document.getElementById('btnGuardar');
+  function setTipo(t){
+    currentTipo = t;
+    btnCompra.classList.toggle('on', t==='compra');
+    btnCompra.classList.toggle('compra', t==='compra');
+    btnVenta.classList.toggle('on', t==='venta');
+    btnVenta.classList.toggle('venta', t==='venta');
+    updateGuardarLabel();
+    btnGuardar.className = 'btn-primary ' + t;
+  }
+  function updateGuardarLabel(){
+    const accion = editingId ? 'Actualizar' : 'Guardar';
+    btnGuardar.textContent = accion + ' ' + (currentTipo === 'compra' ? 'compra' : 'venta');
+  }
+  btnCompra.addEventListener('click', ()=>setTipo('compra'));
+  btnVenta.addEventListener('click', ()=>setTipo('venta'));
+  setTipo('compra');
+
+  // ---------- Auto-calc usdt/tasa/bs ----------
+  const fUsdt = document.getElementById('fUsdt');
+  const fTasa = document.getElementById('fTasa');
+  const fBs = document.getElementById('fBs');
+  const fComision = document.getElementById('fComision');
+  const fLiberada = document.getElementById('fLiberada');
+  const fOrden = document.getElementById('fOrden');
+  const fPlataforma = document.getElementById('fPlataforma');
+  [fUsdt, fTasa, fBs,fComision, fLiberada].forEach(el=>{
+    el.addEventListener('input', ()=>{ lastEditedField = el.id; recalc(); });
+  });
+  function recalc(){
+  const u = parseFloat(fUsdt.value) || 0;
+  const t = parseFloat(fTasa.value) || 0;
+  const b = parseFloat(fBs.value) || 0;
+  const com = parseFloat(fComision.value) || 0;
+  const lib = parseFloat(fLiberada.value) || 0;
+
+  // Cantidad efectiva: usa cantidad liberada si existe, o (usdt - comision) si es venta con comisión, de lo contrario usdt total
+  const effectiveUsdt = lib > 0 ? lib : (currentTipo === 'venta' && com > 0 ? u - com : u);
+
+  if(lastEditedField !== 'fBs' && effectiveUsdt > 0 && t > 0){
+    fBs.value = (effectiveUsdt * t).toFixed(2);
+  } else if(lastEditedField !== 'fTasa' && effectiveUsdt > 0 && b > 0){
+    fTasa.value = (b / effectiveUsdt).toFixed(2);
+  } else if(lastEditedField !== 'fUsdt' && t > 0 && b > 0){
+    const baseUsdt = b / t;
+    fUsdt.value = (currentTipo === 'venta' && com > 0 ? baseUsdt + com : baseUsdt).toFixed(2);
+  }
+}
+
+  // ---------- Fecha / zona horaria del dispositivo ----------
+  function deviceTz(){ return Intl.DateTimeFormat().resolvedOptions().timeZone; }
+  function tzOffsetLabel(){
+    const min = -new Date().getTimezoneOffset();
+    const sign = min >= 0 ? '+' : '-';
+    const h = String(Math.floor(Math.abs(min)/60)).padStart(2,'0');
+    const m = String(Math.abs(min)%60).padStart(2,'0');
+    return `UTC${sign}${h}:${m}`;
+  }
+  function setNowDatetime(){
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('fFecha').value = now.toISOString().slice(0,16);
+    document.getElementById('tzHint').textContent = `Zona horaria detectada: ${deviceTz()} (${tzOffsetLabel()})`;
+  }
+  setNowDatetime();
+
+  // ---------- Photo + OCR ----------
+  const fileInput = document.getElementById('fileInput');
+  document.getElementById('btnAdjuntar').addEventListener('click', ()=>fileInput.click());
+  fileInput.addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      compressImage(ev.target.result, (thumb)=>{
+        attachedPhoto = thumb;
+        document.getElementById('photoPreview').src = thumb;
+        document.getElementById('photoPreviewWrap').style.display = 'block';
+        runOcr(ev.target.result);
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function compressImage(dataUrl, cb){
+    const img = new Image();
+    img.onload = ()=>{
+      const maxW = 480;
+      const scale = Math.min(1, maxW/img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width*scale;
+      canvas.height = img.height*scale;
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      cb(canvas.toDataURL('image/jpeg', 0.55));
+    };
+    img.src = dataUrl;
+  }
+
+  function runOcr(dataUrl){
+    const status = document.getElementById('ocrStatus');
+    status.textContent = 'Leyendo la captura…';
+    status.className = 'ocr-status working';
+    if(typeof Tesseract === 'undefined'){
+      status.textContent = 'No se pudo cargar el lector de texto (sin conexión). Completa los campos manualmente.';
+      return;
+    }
+    Tesseract.recognize(dataUrl, 'spa+eng').then(({data})=>{
+      const text = data.text || '';
+      const found = parseOcrText(text);
+      status.textContent = found
+        ? 'Captura leída (recibo detectado). Revisa y corrige los campos antes de guardar.'
+        : 'Captura leída. No se detectó un formato conocido; completa los campos manualmente.';
+      status.className = 'ocr-status';
+    }).catch(()=>{
+      status.textContent = 'No se pudo leer la captura automáticamente. Completa los campos manualmente.';
+      status.className = 'ocr-status';
+    });
+  }
+
+  // Parser orientado a recibos de Binance P2P, con respaldo genérico
+  function parseOcrText(text){
+    const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+    let foundStructured = false;
+
+    function valueAfter(re, lineIdx){
+      const line = lines[lineIdx];
+      const rest = line.replace(re, '').trim();
+      if(rest) return rest;
+      return lines[lineIdx+1] ? lines[lineIdx+1].trim() : '';
+    }
+    function numberAfter(re, lineIdx){
+      const raw = valueAfter(re, lineIdx);
+      const match = raw.match(/[\d.,]+/);
+      return match ? parseLatinNumber(match[0]) : NaN;
+    }
+
+    for(let i=0;i<lines.length;i++){
+      const line = lines[i];
+
+      if(/vender\s*usdt/i.test(line)){ setTipo('venta'); foundStructured = true; }
+      else if(/comprar\s*usdt/i.test(line)){ setTipo('compra'); foundStructured = true; }
+
+      if(/importe en fiat/i.test(line)){
+        const n = numberAfter(/importe en fiat/i, i);
+        if(!isNaN(n)){ fBs.value = n.toFixed(2); foundStructured = true; }
+      }
+      if(/^precio\b/i.test(line)){
+        const n = numberAfter(/^precio\b/i, i);
+        if(!isNaN(n)){ fTasa.value = n.toFixed(2); foundStructured = true; }
+      }
+      if(/cantidad total/i.test(line)){
+        const n = numberAfter(/cantidad total/i, i);
+        if(!isNaN(n)){ fUsdt.value = n.toFixed(2); foundStructured = true; }
+      }
+      if(/cantidad liberada/i.test(line)){
+        const n = numberAfter(/cantidad liberada/i, i);
+        if(!isNaN(n)){ fLiberada.value = n.toFixed(2); foundStructured = true; }
+      }
+      if(/comisi[oó]n/i.test(line)){
+        const n = numberAfter(/comisi[oó]n/i, i);
+        if(!isNaN(n)){ fComision.value = n.toFixed(2); foundStructured = true; }
+      }
+      if(/n[.,°º]*\s*(?:de\s*)?orden/i.test(line) || /orden/i.test(line)){
+        const raw = valueAfter(/n[.,°º]*\s*(?:de\s*)?orden|orden/i, i);
+        const match = raw.match(/\d{10,}/);
+        if(match && !fOrden.value){ fOrden.value = match[0]; foundStructured = true; }
+      }
+      if(/hora de creaci[oó]n/i.test(line)){
+        const raw = valueAfter(/hora de creaci[oó]n/i, i);
+        const match = raw.match(/(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(:\d{2})?/);
+        if(match){
+          document.getElementById('fFecha').value = `${match[1]}T${match[2]}`;
+          foundStructured = true;
+        }
+      }
+      if(/alias\s*del\s*(comprador|vendedor)|apodo\s*del\s*(comprador|vendedor)/i.test(line)){
+        const raw = valueAfter(/alias\s*del\s*(comprador|vendedor)|apodo\s*del\s*(comprador|vendedor)/i, i);
+        const cleanRaw = raw.replace(/^(del|de|el|la)\b/i, '').trim();
+        const match = cleanRaw.match(/[A-Za-z0-9_.-]{3,25}/);
+        if(match){ 
+          document.getElementById('fUsuario').value = match[0]; 
+          foundStructured = true; 
+        }
+      }
+    }
+
+    if(foundStructured && !fPlataforma.value){
+      fPlataforma.value = 'Binance';
+      document.getElementById('advancedDetails').open = true;
+    }
+
+    if(!foundStructured){
+      // Respaldo genérico: heurística por magnitud de números detectados
+      const numbers = text.match(/[\d.,]{3,}/g) || [];
+      const clean = numbers.map(n=>parseLatinNumber(n)).filter(n=>!isNaN(n) && n>0);
+      if(clean.length){
+        const sorted = [...clean].sort((a,b)=>b-a);
+        if(!fBs.value && sorted[0]) fBs.value = sorted[0].toFixed(2);
+        if(!fUsdt.value && sorted.length>1) fUsdt.value = sorted[sorted.length-1].toFixed(2);
+      }
+      const nameMatch = text.match(/(?:para|de|a)\s*:?\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/);
+      if(nameMatch && !document.getElementById('fUsuario').value){
+        document.getElementById('fUsuario').value = nameMatch[1];
+      }
+      const bancos = ['Banesco','Mercantil','Venezuela','BOD','Provincial','Bancaribe','Binance'];
+      for(const b of bancos){
+        if(text.toLowerCase().includes(b.toLowerCase()) && !document.getElementById('fBanco').value){
+          document.getElementById('fBanco').value = b;
+          break;
+        }
+      }
+    }
+    recalc();
+    // Respaldo inteligente: si no se detectó la etiqueta pero hay un número de 12 a 25 dígitos, es el N.° de orden de Binance
+    if(!fOrden.value){
+      const orderMatch = text.match(/\b\d{12,25}\b/);
+      if(orderMatch){
+        fOrden.value = orderMatch[0];
+        foundStructured = true;
+      }
+    }
+    return foundStructured;
+  }
+
+  // ---------- CRUD local ----------
+  function upsertLocal(rec, touch=true){
+    const idx = records.findIndex(r=>r.id===rec.id);
+    if(touch) rec.updatedAt = Date.now();
+    if(idx>=0) records[idx] = Object.assign({}, records[idx], rec);
+    else records.push(rec);
+    save();
+  }
+  function deleteLocal(id){
+    const rec = records.find(r=>r.id===id);
+    if(rec){ rec.deleted = true; rec.updatedAt = Date.now(); save(); }
+    return rec;
+  }
+
+  function fillFormForEdit(r){
+    editingId = r.id;
+    setTipo(r.tipo);
+    fUsdt.value = r.usdt ?? '';
+    fTasa.value = r.tasa ?? '';
+    fBs.value = r.bs ?? '';
+    fComision.value = r.comision || '';
+    fLiberada.value = r.cantidadLiberada || '';
+    fOrden.value = r.numeroOrden || '';
+    fPlataforma.value = r.plataforma || '';
+    document.getElementById('fFecha').value = (r.fecha||'').slice(0,16);
+    document.getElementById('fUsuario').value = r.usuario || '';
+    document.getElementById('fBanco').value = r.banco || '';
+    if(r.comision || r.cantidadLiberada || r.numeroOrden || r.plataforma){
+      document.getElementById('advancedDetails').open = true;
+    }
+    document.getElementById('editBanner').classList.add('show');
+    updateGuardarLabel();
+    document.querySelectorAll('.tabbar .tab').forEach(b=>b.classList.remove('active'));
+    document.querySelector('.tabbar .tab[data-v="registrar"]').classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-registrar').classList.add('active');
+    window.scrollTo(0,0);
+  }
+  function resetForm(){
+    editingId = null;
+    fUsdt.value=''; fTasa.value=''; fBs.value='';
+    fComision.value=''; fLiberada.value=''; fOrden.value=''; fPlataforma.value='';
+    document.getElementById('fUsuario').value='';
+    document.getElementById('fBanco').value='';
+    document.getElementById('advancedDetails').open = false;
+    attachedPhoto = null;
+    document.getElementById('photoPreviewWrap').style.display='none';
+    document.getElementById('ocrStatus').textContent='';
+    document.getElementById('editBanner').classList.remove('show');
+    setNowDatetime();
+    updateGuardarLabel();
+  }
+  document.getElementById('btnCancelEdit').addEventListener('click', resetForm);
+
+  // ---------- Guardar / actualizar ----------
+  btnGuardar.addEventListener('click', ()=>{
+    const usdt = parseFloat(fUsdt.value);
+    const tasa = parseFloat(fTasa.value);
+    const bs = parseFloat(fBs.value);
+    const fecha = document.getElementById('fFecha').value;
+    const usuario = document.getElementById('fUsuario').value.trim();
+    const banco = document.getElementById('fBanco').value.trim();
+    const comision = parseFloat(fComision.value) || 0;
+    const cantidadLiberada = parseFloat(fLiberada.value) || 0;
+    const numeroOrden = fOrden.value.trim();
+    const plataforma = fPlataforma.value.trim();
+
+    if(isNaN(usdt) || isNaN(tasa) || isNaN(bs) || !fecha){
+      toast('Completa monto, tasa y fecha.');
+      return;
+    }
+
+    const record = {
+      id: editingId || genId(),
+      tipo: currentTipo,
+      usdt, tasa, bs, comision, cantidadLiberada, numeroOrden, plataforma,
+      fecha, usuario, banco,
+      zona: deviceTz(),
+      tzOffset: tzOffsetLabel(),
+      foto: attachedPhoto || (editingId ? (records.find(r=>r.id===editingId)||{}).foto : null) || null,
+      deleted: false
+    };
+    upsertLocal(record);
+    pushToSheet(record);
+    toast(editingId ? 'Transacción actualizada.' : 'Transacción guardada.');
+    resetForm();
+    renderAll();
+  });
+
+  // ---------- Historial ----------
+  function renderLedger(){
+    const list = document.getElementById('ledgerList');
+    let items = [...visibleRecords()].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+    if(historyFilter !== 'todas') items = items.filter(r=>r.tipo===historyFilter);
+    if(!items.length){
+      list.innerHTML = '<div class="empty">Todavía no hay transacciones registradas.</div>';
+      return;
+    }
+    list.innerHTML = items.map(r=>{
+      const d = new Date(r.fecha);
+      const fechaStr = d.toLocaleDateString('es-VE',{day:'2-digit',month:'short'}) + ' · ' + d.toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'});
+      const comisionTag = (r.comision && r.comision>0) ? `<span class="comision">Comisión ${fmt(r.comision)} U</span>` : '';
+      const ordenTag = r.numeroOrden ? `<span>#${r.numeroOrden.slice(-6)}</span>` : '';
+      return `<div class="ledger-row" data-id="${r.id}">
+        <div class="dot ${r.tipo}"></div>
+        <div class="ledger-main">
+          <div class="top"><span>${r.tipo==='compra'?'Compra':'Venta'} · ${r.usuario||'Sin nombre'}</span><span class="amt">${fmt(usdtEfectivo(r))} U</span></div>
+          <div class="meta">
+            <span>${fechaStr}</span>
+            <span>Tasa ${fmt(r.tasa)}</span>
+            <span>${fmt(r.bs)} Bs</span>
+            ${r.banco?`<span>${r.banco}</span>`:''}
+            ${comisionTag}
+            ${ordenTag}
+          </div>
+        </div>
+        <button class="del" data-del="${r.id}">×</button>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.ledger-row').forEach(row=>{
+      row.addEventListener('click', (e)=>{
+        if(e.target.closest('[data-del]')) return;
+        const r = records.find(x=>x.id===row.dataset.id);
+        if(r) fillFormForEdit(r);
+      });
+    });
+    list.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(!confirm('¿Eliminar esta transacción? Se eliminará en todos los dispositivos sincronizados.')) return;
+        deleteLocal(btn.dataset.del);
+        pushDelete(btn.dataset.del);
+        renderAll();
+      });
+    });
+  }
+  document.querySelectorAll('.filters button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const group = btn.closest('.filters');
+      group.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      if(group.id !== 'gananciaFilters'){
+        historyFilter = btn.dataset.f;
+        renderLedger();
+      }
+    });
+  });
+
+  // ---------- Resumen ----------
+  function renderSummary(){
+    const vis = visibleRecords();
+    const compras = vis.filter(r=>r.tipo==='compra');
+    const ventas = vis.filter(r=>r.tipo==='venta');
+    const sum = (arr,k)=>arr.reduce((a,r)=>a+(Number(r[k])||0),0);
+    const sumEfectivo = (arr)=>arr.reduce((a,r)=>a+usdtEfectivo(r),0);
+
+    document.getElementById('sUsdtCompra').textContent = fmt(sumEfectivo(compras));
+    document.getElementById('sUsdtVenta').textContent = fmt(sumEfectivo(ventas));
+    document.getElementById('sBsCompra').textContent = fmt(sum(compras,'bs'),2);
+    document.getElementById('sBsVenta').textContent = fmt(sum(ventas,'bs'),2);
+    const tasaProm = vis.length ? sum(vis,'tasa')/vis.length : 0;
+    document.getElementById('sTasaProm').textContent = fmt(tasaProm);
+    document.getElementById('sComisionTotal').textContent = fmt(sum(vis,'comision'));
+
+    const banks = {};
+    vis.forEach(r=>{
+      const k = r.banco || 'Sin banco';
+      banks[k] = (banks[k]||0) + usdtEfectivo(r);
+    });
+    const bankList = document.getElementById('bankList');
+    const entries = Object.entries(banks).sort((a,b)=>b[1]-a[1]);
+    bankList.innerHTML = entries.length ? entries.map(([b,u])=>`<div class="bank-row"><span>${b}</span><span>${fmt(u)} U</span></div>`).join('') : '<p class="hint">Sin datos todavía.</p>';
+
+    renderGananciaPeriodo();
+  }
+
+  // ---------- Ganancia por periodo ----------
+  let gananciaPeriodo = 'dia';
+  function getPeriodRange(period){
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0,0,0,0);
+    if(period === 'semana'){
+      const day = start.getDay();
+      const diffToMonday = (day === 0 ? 6 : day - 1);
+      start.setDate(start.getDate() - diffToMonday);
+    } else if(period === 'mes'){
+      start.setDate(1);
+    } else if(period === 'todo'){
+      start.setFullYear(2000);
+    }
+    const end = new Date(now);
+    end.setHours(23,59,59,999);
+    return {start, end};
+  }
+  const periodLabels = { dia:'hoy', semana:'esta semana', mes:'este mes', todo:'en total' };
+  function setStat(id, value, isPct){
+    const el = document.getElementById(id);
+    const sign = value > 0 ? '+' : '';
+    el.textContent = isPct ? `${sign}${fmt(value,1)}%` : `${sign}${fmt(value,0)}`;
+    el.classList.remove('pos','neg');
+    if(value > 0) el.classList.add('pos');
+    if(value < 0) el.classList.add('neg');
+  }
+  function renderGananciaPeriodo(){
+    const {start, end} = getPeriodRange(gananciaPeriodo);
+    const enRango = visibleRecords().filter(r=>{
+      const d = new Date(r.fecha);
+      return d >= start && d <= end;
+    });
+    const bsCompra = enRango.filter(r=>r.tipo==='compra').reduce((a,r)=>a+(Number(r.bs)||0),0);
+    const bsVenta = enRango.filter(r=>r.tipo==='venta').reduce((a,r)=>a+(Number(r.bs)||0),0);
+    const usdtCompra = enRango.filter(r=>r.tipo==='compra').reduce((a,r)=>a+usdtEfectivo(r),0);
+    const usdtVenta = enRango.filter(r=>r.tipo==='venta').reduce((a,r)=>a+usdtEfectivo(r),0);
+
+    const gananciaBs = bsVenta - bsCompra;
+    const gananciaUsdt = usdtVenta - usdtCompra;
+    const pctBs = bsCompra > 0 ? (gananciaBs/bsCompra*100) : 0;
+    const pctUsdt = usdtCompra > 0 ? (gananciaUsdt/usdtCompra*100) : 0;
+
+    setStat('gananciaBs', gananciaBs, false);
+    setStat('gananciaUsdt', gananciaUsdt, false);
+    setStat('gananciaPctBs', pctBs, true);
+    setStat('gananciaPctUsdt', pctUsdt, true);
+    if(bsCompra === 0) document.getElementById('gananciaPctBs').textContent = '—';
+    if(usdtCompra === 0) document.getElementById('gananciaPctUsdt').textContent = '—';
+
+    const etiqueta = periodLabels[gananciaPeriodo];
+    document.getElementById('gananciaBsLabel').textContent = `Ganancia (Bs) — ${etiqueta}`;
+    document.getElementById('gananciaUsdtLabel').textContent = `Ganancia (USDT) — ${etiqueta}`;
+  }
+  document.querySelectorAll('#gananciaFilters button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#gananciaFilters button').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      gananciaPeriodo = btn.dataset.p;
+      renderGananciaPeriodo();
+    });
+  });
+
+  // ---------- Sincronización con Google Sheets (CRUD en tiempo real) ----------
+  const fSheetUrl = document.getElementById('fSheetUrl');
+  const fSyncInterval = document.getElementById('fSyncInterval');
+  fSheetUrl.value = settings.sheetUrl || '';
+  fSyncInterval.value = settings.syncInterval || 1;
+
+  function setSyncStatus(mode, text){
+    const el = document.getElementById('syncStatus');
+    el.className = 'sync-status ' + mode;
+    document.getElementById('syncStatusText').textContent = text;
+  }
+
+  fSheetUrl.addEventListener('change', (e)=>{
+    settings.sheetUrl = e.target.value.trim();
+    saveSettings();
+    startSyncLoop();
+  });
+  fSyncInterval.addEventListener('change', (e)=>{
+    const v = Math.max(1, parseInt(e.target.value)||1);
+    settings.syncInterval = v;
+    e.target.value = v;
+    saveSettings();
+    startSyncLoop();
+  });
+
+  function normalizeRemote(rRec){
+    return {
+      id: String(rRec.id),
+      tipo: rRec.tipo || 'compra',
+      usdt: Number(rRec.usdt)||0,
+      tasa: Number(rRec.tasa)||0,
+      bs: Number(rRec.bs)||0,
+      comision: Number(rRec.comision)||0,
+      cantidadLiberada: Number(rRec.cantidadLiberada)||0,
+      numeroOrden: rRec.numeroOrden || '',
+      plataforma: rRec.plataforma || '',
+      fecha: rRec.fecha || '',
+      zona: rRec.zona || '',
+      tzOffset: rRec.tzOffset || '',
+      usuario: rRec.usuario || '',
+      banco: rRec.banco || '',
+      foto: null,
+      updatedAt: Number(rRec.updatedAt)||0,
+      deleted: rRec.deleted === true || rRec.deleted === 'true' || rRec.deleted === 'TRUE'
+    };
+  }
+
+  async function pushToSheet(record){
+    if(!settings.sheetUrl) return;
+    try{
+      await fetch(settings.sheetUrl, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({action:'upsert', record: Object.assign({}, record, {foto: undefined})})
+      });
+    }catch(err){ /* se reintentará en el próximo ciclo de sincronización */ }
+  }
+  async function pushDelete(id){
+    if(!settings.sheetUrl) return;
+    try{
+      await fetch(settings.sheetUrl, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({action:'delete', record:{id, updatedAt: Date.now()}})
+      });
+    }catch(err){ /* se reintentará en el próximo ciclo */ }
+  }
+
+  async function pullAndReconcile(){
+    if(!settings.sheetUrl || isSyncing) return;
+    isSyncing = true;
+    try{
+      const sep = settings.sheetUrl.includes('?') ? '&' : '?';
+      const res = await fetch(settings.sheetUrl + sep + 't=' + Date.now());
+      const data = await res.json();
+      const remoteList = (data.records || []).map(normalizeRemote);
+      const remoteMap = new Map(remoteList.map(r=>[r.id, r]));
+      let changed = false;
+
+      remoteMap.forEach((rRec, id)=>{
+        const local = records.find(r=>r.id===id);
+        if(!local){
+          records.push(rRec);
+          changed = true;
+        } else if(rRec.updatedAt > (Number(local.updatedAt)||0)){
+          const foto = local.foto;
+          Object.assign(local, rRec, {foto});
+          changed = true;
+        }
+      });
+
+      for(const local of records){
+        const rRec = remoteMap.get(local.id);
+        const rUpdated = rRec ? rRec.updatedAt : -1;
+        if((Number(local.updatedAt)||0) > rUpdated){
+          if(local.deleted) await pushDelete(local.id);
+          else await pushToSheet(local);
+        }
+      }
+
+      if(changed){ save(); renderAll(); }
+      setSyncStatus('ok', 'Sincronizado · ' + new Date().toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+    }catch(err){
+      setSyncStatus('error', 'Sin conexión con Google Sheets');
+    }
+    isSyncing = false;
+  }
+
+  function startSyncLoop(){
+    if(syncTimer){ clearInterval(syncTimer); syncTimer = null; }
+    if(!settings.sheetUrl){ setSyncStatus('off', 'Sincronización no configurada'); return; }
+    setSyncStatus('off', 'Conectando…');
+    pullAndReconcile();
+    const ms = Math.max(1000, (settings.syncInterval||1) * 1000);
+    syncTimer = setInterval(pullAndReconcile, ms);
+  }
+
+  document.getElementById('btnSyncAll').addEventListener('click', ()=>{
+    if(!settings.sheetUrl){ toast('Primero ingresa la URL de Google Apps Script.'); return; }
+    toast('Sincronizando…');
+    pullAndReconcile();
+  });
+
+  // ---------- Exportar / importar / borrar ----------
+  document.getElementById('btnExportCsv').addEventListener('click', ()=>{
+    const header = ['tipo','usdt','tasa','bs','comision','cantidadLiberada','numeroOrden','plataforma','fecha','zona','tzOffset','usuario','banco'];
+    const rows = visibleRecords().map(r=>header.map(h=>String(r[h]??'').replace(/,/g,' ')).join(','));
+    const csv = header.join(',')+'\n'+rows.join('\n');
+    downloadFile(csv, 'usdt_bs_registros.csv', 'text/csv');
+  });
+  document.getElementById('btnExportJson').addEventListener('click', ()=>{
+    downloadFile(JSON.stringify(records, null, 2), 'usdt_bs_respaldo.json', 'application/json');
+  });
+  function downloadFile(content, name, type){
+    const blob = new Blob([content], {type});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+  }
+  document.getElementById('btnImportJson').addEventListener('click', ()=>document.getElementById('importInput').click());
+  document.getElementById('importInput').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      try{
+        const imported = JSON.parse(ev.target.result);
+        if(Array.isArray(imported)){
+          imported.forEach(r=>{
+            if(!r.id) r.id = genId();
+            upsertLocal(r, false);
+          });
+          toast('Respaldo importado.');
+          renderAll();
+        }
+      }catch(err){ toast('Archivo inválido.'); }
+    };
+    reader.readAsText(file);
+  });
+  document.getElementById('btnBorrarTodo').addEventListener('click', ()=>{
+    if(confirm('¿Borrar todos los registros de este dispositivo? Si tienes Google Sheets conectado, márcalos también allí manualmente si quieres borrarlos por completo.')){
+      records = [];
+      save();
+      renderAll();
+      toast('Registros borrados localmente.');
+    }
+  });
+
+  // ---------- init ----------
+  renderHeaderDate();
+  renderAll();
+  startSyncLoop();
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+})();
+</script>
+</body>
+</html>
