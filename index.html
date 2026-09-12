@@ -1112,6 +1112,7 @@
       const remoteMap = new Map(remoteList.map(r=>[r.id, r]));
       let changed = false;
 
+      // 1. Actualizar o agregar desde la nube hacia local
       remoteMap.forEach((rRec, id)=>{
         const local = records.find(r=>r.id===id);
         if(!local){
@@ -1122,6 +1123,19 @@
           Object.assign(local, rRec, {foto});
           changed = true;
         }
+      });
+
+      // 2. Si un registro local fue eliminado o actualizado, propagarlo o removerlo
+      records = records.filter(local => {
+        // Si el servidor ya no lo tiene y no es un cambio local reciente pendiente, se elimina
+        if(!remoteMap.has(local.id)){
+          const localAge = Date.now() - (Number(local.updatedAt)||0);
+          if(localAge > 15000){ // Si pasaron más de 15s, asumimos que fue borrado en otro equipo
+            changed = true;
+            return false; 
+          }
+        }
+        return true;
       });
 
       for(const local of records){
