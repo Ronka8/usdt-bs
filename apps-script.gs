@@ -91,8 +91,7 @@ function doPost(e){
 
   if(action === 'delete'){
     if(rowIndex > 0){
-      sheet.getRange(rowIndex, HEADERS.indexOf('UpdatedAt')+1).setValue(now);
-      sheet.getRange(rowIndex, HEADERS.indexOf('Deleted')+1).setValue(true);
+      sheet.deleteRow(rowIndex); // Borra toda la fila físicamente de la hoja
     }
     return respond({status:'ok'});
   }
